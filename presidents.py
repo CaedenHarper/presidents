@@ -27,6 +27,8 @@ class President:
     # it's 1979 adams
     HALF_AMBIGIOUS_FULL_NAMES = ("john adams",)
     AMBIGIOUS_LAST_NAMES = ("adams", "bush", "roosevelt", "johnson", "harrison")
+    # died first year in office
+    AMBIGIOUS_YEARS = ("1841", "1881")
     def __init__(self,
                  first_name: str,
                  last_name: str,
@@ -78,6 +80,14 @@ class President:
             bool: True if the last name is ambiguous, False otherwise.
         """
         return self.last_name.lower() in self.AMBIGIOUS_LAST_NAMES
+
+    def is_year_ambiguous(self) -> bool:
+        """Check if the president's start year is ambiguous.
+
+        Returns:
+            bool: True if the start year is ambiguous, False otherwise.
+        """
+        return any(year in self.AMBIGIOUS_YEARS for year in self.start_year)
 
 class Statistics:
     """Tracks statistics for the quiz game.
@@ -505,6 +515,8 @@ def parse_arguments(settings: Settings) -> None:
         range: tuple[int, int]
         verbosity: Literal[0, 1, 2]
 
+    # TODO: add "nice" option (accepts ambigious names)
+    # TODO: add levenshtein distance option for typos
     parser = argparse.ArgumentParser(description="Quiz game for US presidents.")
     # ensure -r and -e cant be used together
     repeat_group = parser.add_mutually_exclusive_group()
@@ -604,6 +616,9 @@ def main() -> None:
 
         # what information do we give the user?
         question_type = random.choice(["year", "order", "name"])
+        # TODO: more elegant solution for ambiguous years
+        if current_president.is_year_ambiguous():
+            question_type = random.choice(["name", "order"])
 
         if question_type == "year":
             start_year_str = " and ".join(current_president.start_year)
