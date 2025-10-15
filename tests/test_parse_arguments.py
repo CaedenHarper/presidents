@@ -4,7 +4,7 @@ import typing
 
 import pytest
 
-from main import Settings, parse_arguments
+from main import QuizSettings, parse_arguments
 from presidents import NUM_PRESIDENTS
 
 root = logging.getLogger()
@@ -24,12 +24,12 @@ def reset_logger() -> typing.Generator[None, None, None]:  # noqa: UP043 3.10 - 
     for h in old_handlers:
         logger.addHandler(h)
 
-def run_parse(args: list[str]) -> Settings:
+def run_parse(args: list[str]) -> QuizSettings:
     """Run parse_arguments with a temporary sys.argv.
 
     Returns the settings object that was mutated.
     """
-    settings = Settings()
+    settings = QuizSettings()
     argv_backup = sys.argv[:]
     try:
         sys.argv = ["prog", *args]
@@ -47,7 +47,7 @@ def test_defaults_update_settings_and_logger_installed() -> None:
     assert s.end_early is False
     # Default CLI range is (1, NUM_PRESIDENTS)
     assert s.president_range == (1, NUM_PRESIDENTS)
-    assert s.verbose_level == Settings.VERBOSE_NORMAL  # 1
+    assert s.verbose_level == QuizSettings.VERBOSE_NORMAL  # 1
     assert s.allow_ambiguity is False
 
     # One handler with the custom SeverityFormatter should be attached
