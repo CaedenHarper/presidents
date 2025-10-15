@@ -1,4 +1,4 @@
-from presidents import President  # noqa: TC001 breaks 3.10 - 3.13
+from presidents_quiz.presidents import President  # noqa: TC001 breaks 3.10 - 3.13
 
 __all__ = ["get_response"]
 

@@ -5,11 +5,11 @@ import sys
 from dataclasses import dataclass
 from typing import ClassVar, Literal
 
-from formatting import format_as_percent
-from presidents import ALL_PRESIDENTS, NUM_PRESIDENTS
-from quiz_settings import QuizSettings
-from quiz_statistics import QuizStatistics
-from responses import get_response
+from presidents_quiz.formatting import format_as_percent
+from presidents_quiz.presidents import ALL_PRESIDENTS, NUM_PRESIDENTS
+from presidents_quiz.quiz_settings import QuizSettings
+from presidents_quiz.quiz_statistics import QuizStatistics
+from presidents_quiz.responses import get_response
 
 LOGGER = logging.getLogger(__name__)
 
@@ -210,14 +210,17 @@ def main() -> None:
         else: # unexpected question type
             LOGGER.error("Unknown question type: %s", question_type)
 
-if __name__ == "__main__":
+def cli() -> None:
+    """Initialize CLI.
+
+    Parse arguments, handle keyboard interrupt.
+    """
     parse_arguments(GAME_SETTINGS)
     LOGGER.debug(GAME_SETTINGS.pretty_print())
 
     try:
         main()
     except KeyboardInterrupt:
-        # TODO: move to a function
         print(f"""\n\nFinal statistics:
 
               Total questions: {GAME_STATS.total_questions}
@@ -231,3 +234,6 @@ if __name__ == "__main__":
 
         LOGGER.info("\nExiting...")
         sys.exit(1)
+
+if __name__ == "__main__":
+    cli()

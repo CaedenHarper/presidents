@@ -1,4 +1,4 @@
-from presidents import NUM_PRESIDENTS
+from presidents_quiz.presidents import NUM_PRESIDENTS
 
 __all__ = ["QuizSettings"]
 

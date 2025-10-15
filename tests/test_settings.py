@@ -1,6 +1,6 @@
 import pytest
 
-from main import NUM_PRESIDENTS, QuizSettings
+from presidents_quiz.main import NUM_PRESIDENTS, QuizSettings
 
 
 def test_defaults() -> None:

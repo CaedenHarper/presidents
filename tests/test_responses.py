@@ -1,7 +1,7 @@
 import pytest
 
-from presidents import GEORGE_WASHINGTON, GROVER_CLEVELAND
-from responses import (
+from presidents_quiz.presidents import GEORGE_WASHINGTON, GROVER_CLEVELAND
+from presidents_quiz.responses import (
     _get_name_response,  # pyright: ignore[reportPrivateUsage] Fine for testing
     _get_order_response,  # pyright: ignore[reportPrivateUsage] Fine for testing
     _get_year_response,  # pyright: ignore[reportPrivateUsage] Fine for testing

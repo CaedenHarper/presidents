@@ -4,8 +4,9 @@ import typing
 
 import pytest
 
-from main import QuizSettings, parse_arguments
-from presidents import NUM_PRESIDENTS
+from presidents_quiz.main import parse_arguments
+from presidents_quiz.presidents import NUM_PRESIDENTS
+from presidents_quiz.quiz_settings import QuizSettings
 
 root = logging.getLogger()
 
