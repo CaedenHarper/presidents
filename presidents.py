@@ -1,4 +1,8 @@
+import logging
+
 __all__ = ["ALL_PRESIDENTS", "NUM_PRESIDENTS", "President"]
+
+LOGGER = logging.getLogger(__name__)
 
 class President:
     """Represents a U.S. president with name details, order numbers, and start years.
@@ -73,6 +77,96 @@ class President:
             bool: True if the start year is ambiguous, False otherwise.
         """
         return any(year in self.AMBIGIOUS_YEARS for year in self.start_year)
+
+    def check_name(self, given_name: str, *, allow_ambiguity: bool) -> bool:
+        """Verify the user's input matches the president's name.
+
+        Acceptable formats:
+        - first last
+        - first middle last
+        - middle last
+        - nickname
+        - last
+        If the given input is ambiguous (e.g., "John Adams"), return False.
+        """
+        first_last = self.first_name.lower() + " " + self.last_name.lower()
+
+        if self.middle_name is not None:
+            first_middle_last = self.first_name.lower() + " " + self.middle_name.lower() + " " + self.last_name.lower()
+            middle_last = self.middle_name.lower() + " " + self.last_name.lower()
+            # ignore periods in middle initial
+            first_middle_last = first_middle_last.replace(".", "")
+            middle_last = middle_last.replace(".", "")
+        else:
+            first_middle_last = None
+            middle_last = None
+
+        nickname = None if self.nickname is None else self.nickname.lower()
+
+        last = self.last_name.lower()
+        # strip leading and ending whitespace and remove dots
+        given_name = given_name.lower().strip().replace(".", "")
+
+        # warn on ambiguous name
+        if given_name in self.AMBIGIOUS_FULL_NAMES + self.AMBIGIOUS_LAST_NAMES:
+            if allow_ambiguity:
+                LOGGER.debug("Ambiguous name provided: '%s'. Allowed because of -a flag.", given_name)
+            else:
+                LOGGER.warning("Ambiguous name provided: '%s'", given_name)
+
+        # if half-ambiguous, go with no-middle-name option
+        # right now, this is only john adams
+        # e.g., "John Adams" -> John Adams (1797)
+        # "John Quincy Adams" -> John Quincy Adams (1825)
+        if first_last == given_name and first_last in self.HALF_AMBIGIOUS_FULL_NAMES:
+            # give player benifit of the doubt if allow ambiguity is on
+            return allow_ambiguity or self.middle_name is None
+
+        # explicity check for ambiguous names
+        if first_last == given_name and given_name not in self.AMBIGIOUS_FULL_NAMES:
+            return True
+
+        # allow ambiguous names with -a flag
+        if first_last == given_name and given_name in self.AMBIGIOUS_FULL_NAMES and allow_ambiguity:
+            return True
+
+        if first_middle_last == given_name:
+            return True
+
+        # e.g., "Quincy Adams" -> John Quincy Adams (1825)
+        if middle_last == given_name:
+            return True
+
+        # e.g., "Teddy" -> Theodore Roosevelt (1901)
+        if nickname == given_name:
+            return True
+
+        # explicity check for ambiguous last names
+        if last == given_name and given_name not in self.AMBIGIOUS_LAST_NAMES:
+            return True
+
+        if last == given_name and given_name in self.AMBIGIOUS_LAST_NAMES and allow_ambiguity:  # noqa: SIM103 less readable
+            return True
+
+        return False
+
+    def check_order(self, given_order: str) -> bool:
+        """Verify the user's input matches the president's order number(s)."""
+        given_order = given_order.strip()
+
+        if len(self.order_numbers) > 1:
+            return given_order == " ".join(self.order_numbers)
+
+        return given_order == self.order_numbers[0]
+
+    def check_year(self, given_year: str) -> bool:
+        """Verify the user's input matches the president's start year(s)."""
+        given_year = given_year.strip()
+
+        if len(self.start_year) > 1:
+            return given_year == " ".join(self.start_year)
+
+        return given_year == self.start_year[0]
 
 GEORGE_WASHINGTON = President("George", "Washington", ["1"], ["1789"])
 JOHN_ADAMS = President("John", "Adams", ["2"], ["1797"])

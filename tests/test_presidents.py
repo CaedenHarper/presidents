@@ -2,7 +2,6 @@ import logging
 
 import pytest  # noqa: TC002 3.10 - 3.13 fail with type checking block because they don't have lazy annotation evaluation
 
-from main import GAME_SETTINGS, LOGGER, President, check_name, check_order, check_year
 from presidents import (
     GEORGE_H_W_BUSH,
     GEORGE_W_BUSH,
@@ -15,6 +14,7 @@ from presidents import (
     RICHARD_NIXON,
     THEODORE_ROOSEVELT,
     WILLIAM_MCKINLEY,
+    President,
 )
 
 
@@ -69,31 +69,31 @@ def test_president_with_multiple_order_numbers_and_years() -> None:
 # check_name
 
 def test_check_name_accepts_first_last_simple() -> None:
-    assert check_name("George Washington", GEORGE_WASHINGTON) is True
+    assert GEORGE_WASHINGTON.check_name("George Washington", allow_ambiguity=False) is True
 
 
 def test_check_name_accepts_first_middle_last_ignoring_periods_and_spaces() -> None:
-    assert check_name("James K. Polk", JAMES_K_POLK) is True
-    assert check_name("James K Polk", JAMES_K_POLK) is True  # dots removed
-    assert check_name("  James K. Polk  ", JAMES_K_POLK) is True  # edges stripped
-    assert check_name(" James K Polk  ", JAMES_K_POLK) is True  # dots removed and edges stripped
+    assert JAMES_K_POLK.check_name("James K. Polk", allow_ambiguity=False) is True
+    assert JAMES_K_POLK.check_name("James K Polk", allow_ambiguity=False) is True  # dots removed
+    assert JAMES_K_POLK.check_name("  James K. Polk  ", allow_ambiguity=False) is True  # edges stripped
+    assert JAMES_K_POLK.check_name(" James K Polk  ", allow_ambiguity=False) is True  # dots removed and edges stripped
 
 
 def test_check_name_accepts_middle_last() -> None:
-    assert check_name("Quincy Adams", JOHN_QUINCY_ADAMS) is True
+    assert JOHN_QUINCY_ADAMS.check_name("Quincy Adams", allow_ambiguity=False) is True
 
 
 def test_check_name_accepts_nickname() -> None:
-    assert check_name("Teddy", THEODORE_ROOSEVELT) is True
+    assert THEODORE_ROOSEVELT.check_name("Teddy", allow_ambiguity=False) is True
 
 
 def test_check_name_accepts_last_only_when_unambiguous() -> None:
-    assert check_name("Nixon", RICHARD_NIXON) is True
+    assert RICHARD_NIXON.check_name("Nixon", allow_ambiguity=False) is True
 
 
 def test_check_name_rejects_ambiguous_last_name_and_warns(caplog: pytest.LogCaptureFixture) -> None:
     with caplog.at_level("WARNING"):
-        ok = check_name("Johnson", LYNDON_B_JOHNSON)
+        ok = LYNDON_B_JOHNSON.check_name("Johnson", allow_ambiguity=False)
     assert ok is False
     # verify warning about ambiguity is emitted
     assert any("Ambiguous name provided" in rec.getMessage() for rec in caplog.records)
@@ -101,8 +101,8 @@ def test_check_name_rejects_ambiguous_last_name_and_warns(caplog: pytest.LogCapt
 
 def test_check_name_rejects_ambiguous_full_name_for_both_bushes_and_warns(caplog: pytest.LogCaptureFixture) -> None:
     with caplog.at_level("WARNING"):
-        ok41 = check_name("George Bush", GEORGE_H_W_BUSH)
-        ok43 = check_name("George Bush", GEORGE_W_BUSH)
+        ok41 = GEORGE_H_W_BUSH.check_name("George Bush", allow_ambiguity=False)
+        ok43 = GEORGE_W_BUSH.check_name("George Bush", allow_ambiguity=False)
     assert ok41 is False
     assert ok43 is False
     assert any("Ambiguous name provided" in rec.getMessage() for rec in caplog.records)
@@ -110,28 +110,27 @@ def test_check_name_rejects_ambiguous_full_name_for_both_bushes_and_warns(caplog
 
 def test_check_name_half_ambiguous_john_adams_rules() -> None:
     # Intended behavior: plain "John Adams" should match ONLY the elder John Adams
-    assert check_name("John Adams", JOHN_ADAMS) is True
-    assert check_name("John Adams", JOHN_QUINCY_ADAMS) is False
+    assert JOHN_ADAMS.check_name("John Adams", allow_ambiguity=False) is True
+    assert JOHN_QUINCY_ADAMS.check_name("John Adams", allow_ambiguity=False) is False
 
 # check_name with -a flag
 
 def test_ambiguous_fullname_bush_rejected_by_default_and_warns(caplog: pytest.LogCaptureFixture) -> None:
     # default is allow_ambiguity=False
-    caplog.set_level(logging.WARNING, logger=LOGGER.name)
-    ok41 = check_name("George Bush", GEORGE_H_W_BUSH)
-    ok43 = check_name("George Bush", GEORGE_W_BUSH)
+    caplog.set_level(logging.WARNING)
+    ok41 = GEORGE_H_W_BUSH.check_name("George Bush", allow_ambiguity=False)
+    ok43 = GEORGE_W_BUSH.check_name("George Bush", allow_ambiguity=False)
 
     assert not ok41
     assert not ok43
     assert any("Ambiguous name provided" in r.getMessage() for r in caplog.records)
 
 
-def test_ambiguous_fullname_bush_allowed_with_flag_and_debug_logged(caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(GAME_SETTINGS, "allow_ambiguity", True, raising=True)
-    caplog.set_level(logging.DEBUG, logger=LOGGER.name)
+def test_ambiguous_fullname_bush_allowed_with_flag_and_debug_logged(caplog: pytest.LogCaptureFixture) -> None:
+    caplog.set_level(logging.DEBUG)
 
-    ok41 = check_name("George Bush", GEORGE_H_W_BUSH)
-    ok43 = check_name("George Bush", GEORGE_W_BUSH)
+    ok41 = GEORGE_H_W_BUSH.check_name("George Bush", allow_ambiguity=True)
+    ok43 = GEORGE_W_BUSH.check_name("George Bush", allow_ambiguity=True)
 
     assert ok41
     assert ok43
@@ -139,58 +138,53 @@ def test_ambiguous_fullname_bush_allowed_with_flag_and_debug_logged(caplog: pyte
     assert any("Allowed because of -a flag" in r.getMessage() for r in caplog.records)
 
 
-def test_half_ambiguous_john_adams_for_jqa_depends_on_flag(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_half_ambiguous_john_adams_for_jqa_depends_on_flag() -> None:
     # Without -a: "John Adams" should NOT match John Quincy Adams
-    monkeypatch.setattr(GAME_SETTINGS, "allow_ambiguity", False, raising=True)
-    assert check_name("John Adams", JOHN_QUINCY_ADAMS) is False
+    assert JOHN_QUINCY_ADAMS.check_name("John Adams", allow_ambiguity=False) is False
     # With -a: it SHOULD match John Quincy Adams
-    monkeypatch.setattr(GAME_SETTINGS, "allow_ambiguity", True, raising=True)
-    assert check_name("John Adams", JOHN_QUINCY_ADAMS) is True
+    assert JOHN_QUINCY_ADAMS.check_name("John Adams", allow_ambiguity=True) is True
     # And the elder John Adams continues to match either way
-    assert check_name("John Adams", JOHN_ADAMS) is True
+    assert JOHN_ADAMS.check_name("John Adams", allow_ambiguity=True) is True
 
 
-def test_ambiguous_lastname_johnson_depends_on_flag(caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(GAME_SETTINGS, "allow_ambiguity", False, raising=True)
-    caplog.set_level(logging.WARNING, logger=LOGGER.name)
-    assert check_name("Johnson", LYNDON_B_JOHNSON) is False
+def test_ambiguous_lastname_johnson_depends_on_flag(caplog: pytest.LogCaptureFixture) -> None:
+    caplog.set_level(logging.WARNING)
+    assert LYNDON_B_JOHNSON.check_name("Johnson", allow_ambiguity=False) is False
     assert any("Ambiguous name provided" in r.getMessage() for r in caplog.records)
 
-    # Now allow; last-name-only should be accepted, and debug is logged
-    monkeypatch.setattr(GAME_SETTINGS, "allow_ambiguity", True, raising=True)
     caplog.clear()
-    caplog.set_level(logging.DEBUG, logger=LOGGER.name)
-    assert check_name("Johnson", LYNDON_B_JOHNSON) is True
+    caplog.set_level(logging.DEBUG)
+    assert LYNDON_B_JOHNSON.check_name("Johnson", allow_ambiguity=True) is True
     assert any("Allowed because of -a flag" in r.getMessage() for r in caplog.records)
 
 
 # check_order
 
 def test_check_order_single_term_exact_match_and_trim() -> None:
-    assert check_order("25", WILLIAM_MCKINLEY) is True
-    assert check_order(" 25 ", WILLIAM_MCKINLEY) is True
-    assert check_order("24", WILLIAM_MCKINLEY) is False
+    assert WILLIAM_MCKINLEY.check_order("25") is True
+    assert WILLIAM_MCKINLEY.check_order(" 25 ") is True
+    assert WILLIAM_MCKINLEY.check_order("24") is False
 
 
 def test_check_order_multi_term_needs_space_separated_exact_sequence() -> None:
     # Grover Cleveland served non-consecutive terms: "22 24"
-    assert check_order("22 24", GROVER_CLEVELAND) is True
-    assert check_order("22", GROVER_CLEVELAND) is False
-    assert check_order("22,24", GROVER_CLEVELAND) is False  # commas not allowed by implementation
-    assert check_order("24 22", GROVER_CLEVELAND) is False  # wrong order
+    assert GROVER_CLEVELAND.check_order("22 24") is True
+    assert GROVER_CLEVELAND.check_order("22") is False
+    assert GROVER_CLEVELAND.check_order("22,24") is False  # commas not allowed by implementation
+    assert GROVER_CLEVELAND.check_order("24 22") is False  # wrong order
 
 
 # check_year
 
 def test_check_year_single_term_exact_match_and_trim() -> None:
-    assert check_year("1897", WILLIAM_MCKINLEY) is True
-    assert check_year(" 1897 ", WILLIAM_MCKINLEY) is True
-    assert check_year("1898", WILLIAM_MCKINLEY) is False
+    assert WILLIAM_MCKINLEY.check_year("1897") is True
+    assert WILLIAM_MCKINLEY.check_year(" 1897 ") is True
+    assert WILLIAM_MCKINLEY.check_year("1898") is False
 
 
 def test_check_year_multi_term_needs_space_separated_exact_sequence() -> None:
     # Grover Cleveland: "1885 1893"
-    assert check_year("1885 1893", GROVER_CLEVELAND) is True
-    assert check_year("1885", GROVER_CLEVELAND) is False
-    assert check_year("1885,1893", GROVER_CLEVELAND) is False
-    assert check_year("1893 1885", GROVER_CLEVELAND) is False
+    assert GROVER_CLEVELAND.check_year("1885 1893") is True
+    assert GROVER_CLEVELAND.check_year("1885") is False
+    assert GROVER_CLEVELAND.check_year("1885,1893") is False
+    assert GROVER_CLEVELAND.check_year("1893 1885") is False
