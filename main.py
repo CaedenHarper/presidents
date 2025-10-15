@@ -183,98 +183,6 @@ def format_as_percent(n: int, d: int) -> str:
     """Helper function to format a numerator and denominator as a percent to two decimal places."""
     return f"{(n / d * 100) if d > 0 else 0:.2f}%"
 
-# TODO: move check_* to Presidents class
-
-def check_name(given_name: str, president: President) -> bool:
-    """Verify the user's input matches the president's name.
-
-    Acceptable formats:
-    - first last
-    - first middle last
-    - middle last
-    - nickname
-    - last
-    If the given input is ambiguous (e.g., "John Adams"), return False.
-    """
-    first_last = president.first_name.lower() + " " + president.last_name.lower()
-
-    if president.middle_name is not None:
-        first_middle_last = president.first_name.lower() + " " + president.middle_name.lower() + " " + president.last_name.lower()
-        middle_last = president.middle_name.lower() + " " + president.last_name.lower()
-        # ignore periods in middle initial
-        first_middle_last = first_middle_last.replace(".", "")
-        middle_last = middle_last.replace(".", "")
-    else:
-        first_middle_last = None
-        middle_last = None
-
-    nickname = None if president.nickname is None else president.nickname.lower()
-
-    last = president.last_name.lower()
-    # strip leading and ending whitespace and remove dots
-    given_name = given_name.lower().strip().replace(".", "")
-
-    # warn on ambiguous name
-    if given_name in president.AMBIGIOUS_FULL_NAMES + president.AMBIGIOUS_LAST_NAMES:
-        if GAME_SETTINGS.allow_ambiguity:
-            LOGGER.debug("Ambiguous name provided: '%s'. Allowed because of -a flag.", given_name)
-        else:
-            LOGGER.warning("Ambiguous name provided: '%s'", given_name)
-
-    # if half-ambiguous, go with no-middle-name option
-    # right now, this is only john adams
-    # e.g., "John Adams" -> John Adams (1797)
-    # "John Quincy Adams" -> John Quincy Adams (1825)
-    if first_last == given_name and first_last in president.HALF_AMBIGIOUS_FULL_NAMES:
-        # give player benifit of the doubt if allow ambiguity is on
-        return GAME_SETTINGS.allow_ambiguity or president.middle_name is None
-
-    # explicity check for ambiguous names
-    if first_last == given_name and given_name not in president.AMBIGIOUS_FULL_NAMES:
-        return True
-
-    # allow ambiguous names with -a flag
-    if first_last == given_name and given_name in president.AMBIGIOUS_FULL_NAMES and GAME_SETTINGS.allow_ambiguity:
-        return True
-
-    if first_middle_last == given_name:
-        return True
-
-    # e.g., "Quincy Adams" -> John Quincy Adams (1825)
-    if middle_last == given_name:
-        return True
-
-    # e.g., "Teddy" -> Theodore Roosevelt (1901)
-    if nickname == given_name:
-        return True
-
-    # explicity check for ambiguous last names
-    if last == given_name and given_name not in president.AMBIGIOUS_LAST_NAMES:
-        return True
-
-    if last == given_name and given_name in president.AMBIGIOUS_LAST_NAMES and GAME_SETTINGS.allow_ambiguity:  # noqa: SIM103 less readable
-        return True
-
-    return False
-
-def check_order(given_order: str, president: President) -> bool:
-    """Verify the user's input matches the president's order number(s)."""
-    given_order = given_order.strip()
-
-    if len(president.order_numbers) > 1:
-        return given_order == " ".join(president.order_numbers)
-
-    return given_order == president.order_numbers[0]
-
-def check_year(given_year: str, president: President) -> bool:
-    """Verify the user's input matches the president's start year(s)."""
-    given_year = given_year.strip()
-
-    if len(president.start_year) > 1:
-        return given_year == " ".join(president.start_year)
-
-    return given_year == president.start_year[0]
-
 def get_year_response(president: President, *, check_name_result: bool, check_order_result: bool) -> str:
     """Return response based on which parts were correct in year response."""
     if check_name_result and check_order_result:
@@ -442,19 +350,21 @@ def parse_arguments(settings: Settings) -> None:
     settings.verbose_level = args.verbosity
     settings.allow_ambiguity = args.allow_ambiguity
 
+    root = logging.getLogger()
+
     # TODO: move to logging setup function
     # Update logging level based on verbosity
     if settings.verbose_level == settings.VERBOSE_QUIET:
-        LOGGER.setLevel(logging.ERROR)
+        root.setLevel(logging.ERROR)
     elif settings.verbose_level == settings.VERBOSE_VERBOSE:
-        LOGGER.setLevel(logging.DEBUG)
+        root.setLevel(logging.DEBUG)
     else: # settings.VERBOSE_NORMAL
-        LOGGER.setLevel(logging.INFO)
+        root.setLevel(logging.INFO)
 
     # Add a formatter that changes format based on severity
     class SeverityFormatter(logging.Formatter):
         FORMATS: ClassVar[dict[int, str]] = {
-            logging.DEBUG: "[DEBUG] %(message)s",
+            logging.DEBUG: "[%(name)s:DEBUG] %(message)s",
             logging.INFO: "%(message)s",
             logging.WARNING: "[WARNING] %(message)s",
             logging.ERROR: "[ERROR] %(message)s",
@@ -467,7 +377,7 @@ def parse_arguments(settings: Settings) -> None:
 
     handler = logging.StreamHandler()
     handler.setFormatter(SeverityFormatter())
-    LOGGER.addHandler(handler)
+    root.addHandler(handler)
 
 def main() -> None:
     """Run the main game loop."""
@@ -508,9 +418,9 @@ def main() -> None:
 
             print(f"Year = {start_year_str}:")
             user_name = input("Who was the president? ")
-            check_name_result = check_name(user_name, current_president)
+            check_name_result = current_president.check_name(user_name, allow_ambiguity=GAME_SETTINGS.allow_ambiguity)
             user_order = input("What was the order number? (if multiple, separate with spaces) ")
-            check_order_result = check_order(user_order, current_president)
+            check_order_result = current_president.check_order(user_order)
 
             # TODO: move logging to function to allow reuse between question types
             LOGGER.debug("User input: name='%s', order='%s'", user_name, user_order)
@@ -531,9 +441,9 @@ def main() -> None:
 
             print(f"Order number = {order_str}:")
             user_name = input("Who was the president? ")
-            check_name_result = check_name(user_name, current_president)
+            check_name_result = current_president.check_name(user_name, allow_ambiguity=GAME_SETTINGS.allow_ambiguity)
             user_year = input("What year did they start their term? (if multiple, separate with spaces) ")
-            check_year_result = check_year(user_year, current_president)
+            check_year_result = current_president.check_year(user_year)
 
             LOGGER.debug("User input: name='%s', year='%s'", user_name, user_year)
             LOGGER.debug("Check results: name=%s, year=%s", check_name_result, check_year_result)
@@ -553,9 +463,9 @@ def main() -> None:
 
             print(f"President = {name_str}:")
             user_order = input("What was their order number? (if multiple, separate with spaces) ")
-            check_order_result = check_order(user_order, current_president)
+            check_order_result = current_president.check_order(user_order)
             user_year = input("What year did they start their term? (if multiple, separate with spaces) ")
-            check_year_result = check_year(user_year, current_president)
+            check_year_result = current_president.check_year(user_year)
 
             LOGGER.debug("User input: order='%s', year='%s'", user_order, user_year)
             LOGGER.debug("Check results: order=%s, year=%s", check_order_result, check_year_result)

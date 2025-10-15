@@ -4,14 +4,15 @@ import typing
 
 import pytest
 
-from main import LOGGER, Settings, parse_arguments
+from main import Settings, parse_arguments
 from presidents import NUM_PRESIDENTS
 
+root = logging.getLogger()
 
 @pytest.fixture(autouse=True)
 def reset_logger() -> typing.Generator[None, None, None]:  # noqa: UP043 3.10 - 3.12 require all three type arguments
-    """Keep LOGGER isolated per test: clear handlers and reset level."""
-    logger = LOGGER
+    """Keep root logger isolated per test: clear handlers and reset level."""
+    logger = root
     old_handlers = list(logger.handlers)
     old_level = logger.level
     logger.handlers = []
@@ -22,7 +23,6 @@ def reset_logger() -> typing.Generator[None, None, None]:  # noqa: UP043 3.10 - 
     # restore prior handlers if any (probably none for this module)
     for h in old_handlers:
         logger.addHandler(h)
-
 
 def run_parse(args: list[str]) -> Settings:
     """Run parse_arguments with a temporary sys.argv.
@@ -51,12 +51,11 @@ def test_defaults_update_settings_and_logger_installed() -> None:
     assert s.allow_ambiguity is False
 
     # One handler with the custom SeverityFormatter should be attached
-    handlers = LOGGER.handlers
+    handlers = [h for h in root.handlers if h.formatter.__class__.__name__ == "SeverityFormatter"]
     assert len(handlers) == 1
-    assert handlers[0].formatter.__class__.__name__ == "SeverityFormatter"
 
     # Default verbosity -> INFO level
-    assert LOGGER.level == logging.INFO
+    assert root.level == logging.INFO
 
 
 # -r and -e flags
@@ -111,22 +110,22 @@ def test_invalid_range_triggers_parser_error(start: str, end: str, capsys: pytes
 )
 def test_verbosity_sets_logger_level(level_arg: str, expected_level: int) -> None:
     run_parse(["-v", level_arg])
-    assert LOGGER.level == expected_level
+    assert root.level == expected_level
 
 
 def test_severity_formatter_output_for_verbose_debug(capsys: pytest.CaptureFixture[str]) -> None:
     # -v 2 installs DEBUG and the custom formatter
     run_parse(["-v", "2"])
 
-    LOGGER.debug("dmsg")
-    LOGGER.info("imsg")
-    LOGGER.warning("wmsg")
-    LOGGER.error("emsg")
+    root.debug("dmsg")
+    root.info("imsg")
+    root.warning("wmsg")
+    root.error("emsg")
 
     out = capsys.readouterr().err  # StreamHandler uses stderr by default
     outlines = out.split("\n")
     # Expect the specific prefixes configured by SeverityFormatter
-    assert "[DEBUG] dmsg" in outlines
+    assert "[root:DEBUG] dmsg" in outlines
     assert "imsg" in outlines # INFO should not have prefix
     assert "[WARNING] wmsg" in outlines
     assert "[ERROR] emsg" in outlines
@@ -134,9 +133,9 @@ def test_severity_formatter_output_for_verbose_debug(capsys: pytest.CaptureFixtu
 
 def test_verbosity_info_filters_debug_and_formats(capsys: pytest.CaptureFixture[str]) -> None:
     run_parse(["-v", "1"])
-    LOGGER.debug("should_not_show")
-    LOGGER.info("hello_info")
-    LOGGER.warning("hello_warn")
+    root.debug("should_not_show")
+    root.info("hello_info")
+    root.warning("hello_warn")
 
     out = capsys.readouterr().err
     assert "should_not_show" not in out
