@@ -39,7 +39,7 @@ def run_parse(args: list[str]) -> Settings:
         sys.argv = argv_backup
 
 
-# --- defaults ----------------------------------------------------------------
+# defaults
 
 def test_defaults_update_settings_and_logger_installed() -> None:
     s = run_parse([])
@@ -48,6 +48,7 @@ def test_defaults_update_settings_and_logger_installed() -> None:
     # Default CLI range is (1, NUM_PRESIDENTS)
     assert s.president_range == (1, NUM_PRESIDENTS)
     assert s.verbose_level == Settings.VERBOSE_NORMAL  # 1
+    assert s.allow_ambiguity is False
 
     # One handler with the custom SeverityFormatter should be attached
     handlers = LOGGER.handlers
@@ -58,7 +59,7 @@ def test_defaults_update_settings_and_logger_installed() -> None:
     assert LOGGER.level == logging.INFO
 
 
-# --- flags: -r / -e mutual exclusion -----------------------------------------
+# -r and -e flags
 
 def test_repeat_flag_sets_repeat_true() -> None:
     s = run_parse(["-r"])
@@ -81,7 +82,7 @@ def test_r_and_e_together_errors(capsys: pytest.CaptureFixture[str]) -> None:
     assert "not allowed with argument" in err
 
 
-# --- ranges ------------------------------------------------------------------
+# ranges
 
 def test_valid_range_is_applied() -> None:
     s = run_parse(["-R", "3", "7"])
@@ -98,7 +99,7 @@ def test_invalid_range_triggers_parser_error(start: str, end: str, capsys: pytes
     assert "Must be between 1 and" in err
 
 
-# --- verbosity and logging behavior ------------------------------------------
+# verbosity and logging behavior
 
 @pytest.mark.parametrize(
     ("level_arg", "expected_level"),
@@ -149,3 +150,13 @@ def test_invalid_verbosity_choice_errors(capsys: pytest.CaptureFixture[str]) -> 
     assert ei.value.code == 2
     err = capsys.readouterr().err
     assert "invalid choice" in err.lower()
+
+# -a flag
+
+def test_ambiguous_flag_set_true() -> None:
+    s = run_parse(["-a"])
+    assert s.allow_ambiguity is True
+
+def test_ambiguous_flag_set_false() -> None:
+    s = run_parse([])
+    assert s.allow_ambiguity is False

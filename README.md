@@ -20,6 +20,8 @@ options:
                         Range of presidents to include (1-45). (Default: all)
   -v, --verbose {0,1,2}
                         Verbosity level: 0 = quiet, 1 = normal, 2 = verbose. (Default: 1)
+  -a, --allow-ambiguity
+                        Allows amibguous answers. For example, 'John Adams' will count for both presidents if this flag is true. (Default: false)
 ```
 
 ## Requirements
@@ -39,7 +41,7 @@ uv venv
 .venv\Scripts\activate
 uv pip install -r requirements.txt
 # linting
-python -m ruff .
+python -m ruff check .
 # type checking
 python -m pyright .
 # pytests

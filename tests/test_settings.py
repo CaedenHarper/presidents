@@ -61,18 +61,15 @@ def test_flags_and_pretty_print_format() -> None:
         end_early=True,
         president_range=(3, 10),
         verbose_level=Settings.VERBOSE_VERBOSE,
+        allow_ambiguity=False,
     )
     # ensure values stick (range is valid so no fallback)
     assert s.repeat_questions is True
     assert s.end_early is True
     assert s.president_range == (3, 10)
     assert s.verbose_level == Settings.VERBOSE_VERBOSE
+    assert s.allow_ambiguity is False
 
     # pretty_print should match exact formatting
-    expected = (
-        f"repeat_questions={s.repeat_questions}, "
-        f"end_early={s.end_early}, "
-        f"president_range={s.president_range}, "
-        f"verbose_level={s.verbose_level}"
-    )
+    expected = "repeat_questions=True, end_early=True, president_range=(3, 10), verbose_level=2, allow_ambiguity=False"
     assert s.pretty_print() == expected

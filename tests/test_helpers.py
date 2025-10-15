@@ -3,7 +3,7 @@ import pytest
 from main import format_as_percent, get_name_response, get_order_response, get_response, get_year_response
 from presidents import GEORGE_WASHINGTON, GROVER_CLEVELAND
 
-# --- format_as_percent -------------------------------------------------------
+# format_as_percent
 
 @pytest.mark.parametrize(
     ("n","d","expected"),
@@ -20,7 +20,7 @@ def test_format_as_percent(n: int, d: int, expected: str) -> None:
     assert format_as_percent(n, d) == expected
 
 
-# --- get_year_response -------------------------------------------------------
+# get_year_response
 
 def test_get_year_response_correct() -> None:
     assert get_year_response(GEORGE_WASHINGTON, check_name_result=True, check_order_result=True) == "Correct!"
@@ -46,7 +46,7 @@ def test_get_year_response_multi_term_joins_with_and() -> None:
     assert msg == "Wrong! The correct answer is president Grover Cleveland, order number 22 and 24."
 
 
-# --- get_order_response ------------------------------------------------------
+# get_order_response
 
 def test_get_order_response_correct() -> None:
     assert get_order_response(GEORGE_WASHINGTON, check_name_result=True, check_year_result=True) == "Correct!"
@@ -72,7 +72,7 @@ def test_get_order_response_multi_term_joins_with_and() -> None:
     assert msg == "Wrong start year! The correct start year is 1885 and 1893."
 
 
-# --- get_name_response -------------------------------------------------------
+# get_name_response
 
 def test_get_name_response_correct() -> None:
     assert get_name_response(GEORGE_WASHINGTON, check_order_result=True, check_year_result=True) == "Correct!"
@@ -98,7 +98,7 @@ def test_get_name_response_multi_term_joins_with_and() -> None:
     assert msg == "Wrong! The correct answer is order number 22 and 24, start year 1885 and 1893."
 
 
-# --- get_response (router) ---------------------------------------------------
+# get_response
 
 def test_get_response_routes_to_year() -> None:
     expected = get_year_response(GEORGE_WASHINGTON, check_name_result=True, check_order_result=False)
