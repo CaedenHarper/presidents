@@ -10,7 +10,7 @@ This project includes `main.py`, a Python CLI for memorizing the order of US Pre
 ## Usage
 
 ```bash
-python presidents.py [-h | --help] [-r | --repeat] [-R | --range START END] [-v | --verbose {0,1,2}]
+python main.py [-h] [-r | -e] [-R START END] [-v {0,1,2}] [-a]
 
 options:
   -h, --help            show this help message and exit
