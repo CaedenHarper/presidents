@@ -1,3 +1,16 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "presidents-quiz"
+version = "1.0.0"
+description = "CLI quiz game for U.S. presidents"
+readme = "README.md"
+requires-python = ">=3.10"
+
+# Ruff (lint)
+[tool.ruff]
 # Exclude a variety of commonly ignored directories
 exclude = [
     ".bzr",
@@ -27,29 +40,13 @@ exclude = [
     "site-packages",
     "venv",
 ]
-
-# 150 is good on my monitor
+# 150 is good for my monitor
 line-length = 150
 indent-width = 4
 
 target-version = "py314"
 
-# Use Google style docstrings
-[lint.pydocstyle]
-convention = "google"
-
-# Ignore certain rules in tests
-[lint.per-file-ignores]
-"tests/**.py" = [
-    # Allow assert statements for pytest
-    "S101",
-    # Ignore missing docstrings in tests
-    "D103",
-    # Magic constants in tests allowed
-    "PLR2004",
-]
-
-[lint]
+[tool.ruff.lint]
 # This project selects all rules, and selectively ignores ones that do not make sense
 select = ["ALL"]
 ignore = [
@@ -76,11 +73,39 @@ ignore = [
 # Allow unused variables when underscore-prefixed
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
-[format]
-# Ruff Defaults
+# Use Google style docstrings
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+# Ignore certain rules in tests
+[tool.ruff.lint.per-file-ignores]
+"tests/**.py" = [
+    # Allow assert statements for pytest
+    "S101",
+    # Ignore missing docstrings in tests
+    "D103",
+    # Magic constants in tests allowed
+    "PLR2004",
+]
+
+[tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
 docstring-code-format = false
 docstring-code-line-length = "dynamic"
+
+# Pyright (type checking)
+[tool.pyright]
+pythonVersion = "3.14"
+exclude = ["**/.venv", "**/.git", "**/__pycache__", "build", "dist"]
+
+# Strict checking
+typeCheckingMode = "strict"
+reportUnreachable = "error"
+
+# Pytest
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
