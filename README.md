@@ -39,7 +39,7 @@ uv venv
 .venv\Scripts\activate
 uv pip install -r requirements.txt
 # linting
-python -m ruff .
+python -m ruff check .
 # type checking
 python -m pyright .
 # pytests

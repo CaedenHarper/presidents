@@ -129,13 +129,14 @@ class Settings:
     """Stores configuration settings for the quiz game.
 
     Attributes:
-        repeat_questions (bool): If true, questions may be repeated
-            before all have been asked.
+        VERBOSE_QUIET (Literal[0]): Verbose quiet magic number.
+        VERBOSE_NORMAL (Literal[1]): Verbose normal magic number.
+        VERBOSE_VERBOSE (Literal[2]): Verbose verbose magic number.
+        repeat_questions (bool): If true, questions may be repeated before all have been asked.
         end_early (bool): If true, ends the game when all questions have been asked.
-        president_range (tuple[int, int]): Range of presidents to include\
-            (1-indexed, inclusive).
-        verbose_level (Literal[0, 1, 2]): Verbosity level
-            (0 = quiet, 1 = normal, 2 = verbose).
+        president_range (tuple[int, int]): Range of presidents to include.
+        verbose_level (int): Verbosity level.
+        allow_ambiguity (bool): If true, ambiguous answers are allowed.
     """
 
     VERBOSE_QUIET = 0
@@ -147,16 +148,9 @@ class Settings:
                  repeat_questions: bool = False,
                  end_early: bool = False,
                  president_range: tuple[int, int] | None = None,
-                 verbose_level: int | None = None) -> None:
-        """Initialize Settings with configuration options.
-
-        Args:
-            repeat_questions (bool): If true, questions may be repeated before all have
-                been asked.
-            end_early (bool): If true, ends the game when all questions have been asked.
-            president_range (tuple[int, int], optional): Range of presidents to include.
-            verbose_level (int, optional): Verbosity level.
-        """
+                 verbose_level: int | None = None,
+                 allow_ambiguity: bool = False) -> None:
+        """Initialize Settings with configuration options."""
         self.repeat_questions = repeat_questions
         self.end_early = end_early
         self.president_range = (
@@ -166,6 +160,7 @@ class Settings:
             else (1, NUM_PRESIDENTS + 1)
         )
         self.verbose_level = verbose_level if verbose_level in (0, 1, 2) else 1
+        self.allow_ambiguity = allow_ambiguity
 
     def pretty_print(self) -> str:
         """Return a formatted string summarizing all settings for the quiz game.
@@ -176,7 +171,8 @@ class Settings:
         return (f"repeat_questions={self.repeat_questions}, "
                 f"end_early={self.end_early}, "
                 f"president_range={self.president_range}, "
-                f"verbose_level={self.verbose_level}")
+                f"verbose_level={self.verbose_level}, "
+                f"allow_ambiguity={self.allow_ambiguity}")
 
 LOGGER = logging.getLogger(__name__)
 
@@ -215,18 +211,30 @@ def check_name(given_name: str, president: President) -> bool:
     nickname = None if president.nickname is None else president.nickname.lower()
 
     last = president.last_name.lower()
-    # strip whitespace and remove dots
+    # strip leading and ending whitespace and remove dots
     given_name = given_name.lower().strip().replace(".", "")
+
+    # warn on ambiguous name
+    if given_name in president.AMBIGIOUS_FULL_NAMES + president.AMBIGIOUS_LAST_NAMES:
+        if GAME_SETTINGS.allow_ambiguity:
+            LOGGER.debug("Ambiguous name provided: '%s'. Allowed because of -a flag.", given_name)
+        else:
+            LOGGER.warning("Ambiguous name provided: '%s'", given_name)
 
     # if half-ambiguous, go with no-middle-name option
     # right now, this is only john adams
     # e.g., "John Adams" -> John Adams (1797)
     # "John Quincy Adams" -> John Quincy Adams (1825)
-    if given_name == first_last and first_last in president.HALF_AMBIGIOUS_FULL_NAMES:
-        return president.middle_name is None
+    if first_last == given_name and first_last in president.HALF_AMBIGIOUS_FULL_NAMES:
+        # give player benifit of the doubt if allow ambiguity is on
+        return GAME_SETTINGS.allow_ambiguity or president.middle_name is None
 
     # explicity check for ambiguous names
     if first_last == given_name and given_name not in president.AMBIGIOUS_FULL_NAMES:
+        return True
+
+    # allow ambiguous names with -a flag
+    if first_last == given_name and given_name in president.AMBIGIOUS_FULL_NAMES and GAME_SETTINGS.allow_ambiguity:
         return True
 
     if first_middle_last == given_name:
@@ -244,9 +252,8 @@ def check_name(given_name: str, president: President) -> bool:
     if last == given_name and given_name not in president.AMBIGIOUS_LAST_NAMES:
         return True
 
-    # warn on ambiguous name
-    if given_name in president.AMBIGIOUS_FULL_NAMES + president.AMBIGIOUS_LAST_NAMES:
-        LOGGER.warning("Ambiguous name provided: '%s'", given_name)
+    if last == given_name and given_name in president.AMBIGIOUS_LAST_NAMES and GAME_SETTINGS.allow_ambiguity:  # noqa: SIM103 less readable
+        return True
 
     return False
 
@@ -384,9 +391,8 @@ def parse_arguments(settings: Settings) -> None:
         end_early: bool
         range: tuple[int, int]
         verbosity: Literal[0, 1, 2]
+        allow_ambiguity: bool
 
-    # TODO: add "nice" option (accepts ambigious names)
-    # TODO: add levenshtein distance option for typos
     # TODO: add "sequential" option for going in order instead of random
     parser = argparse.ArgumentParser(description="Quiz game for US presidents.")
     # ensure -r and -e cant be used together
@@ -415,6 +421,13 @@ def parse_arguments(settings: Settings) -> None:
                         choices=[0, 1, 2],
                         default=1,
                         help="Verbosity level: 0 = quiet, 1 = normal, 2 = verbose. (Default: 1)")
+    parser.add_argument("-a",
+                        "--allow-ambiguity",
+                        action="store_true",
+                        help=(
+                            "Allows amibguous answers. For example, 'John Adams' will count for both presidents if this flag is true. "
+                            "(Default: false)"
+                        ))
 
     args = ArgumentTypes(**parser.parse_args().__dict__)
 
@@ -427,6 +440,7 @@ def parse_arguments(settings: Settings) -> None:
         parser.error(f"Invalid range: {args.range}. Must be between 1 and "
                      f"{NUM_PRESIDENTS}, inclusive, with START <= END.")
     settings.verbose_level = args.verbosity
+    settings.allow_ambiguity = args.allow_ambiguity
 
     # TODO: move to logging setup function
     # Update logging level based on verbosity

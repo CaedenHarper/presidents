@@ -14,7 +14,7 @@ def test_initial_state_is_zero() -> None:
     assert s.year_questions == 0
 
 
-# -------- record_year_question ------------------------------------------------
+# record_year_question
 
 def test_record_year_question_both_correct() -> None:
     s = Statistics()
@@ -65,7 +65,7 @@ def test_record_year_question_none_correct() -> None:
     assert s.correct_orders == 0
 
 
-# -------- record_order_question ----------------------------------------------
+# record_order_question
 
 def test_record_order_question_both_correct() -> None:
     s = Statistics()
@@ -113,7 +113,7 @@ def test_record_order_question_none_correct() -> None:
     assert s.correct_years == 0
 
 
-# -------- record_name_question -----------------------------------------------
+# record_name_question
 
 def test_record_name_question_both_correct() -> None:
     s = Statistics()
@@ -161,7 +161,7 @@ def test_record_name_question_none_correct() -> None:
     assert s.correct_years == 0
 
 
-# -------- cumulative behavior -------------------------------------------------
+# cumulative behavior
 
 def test_cumulative_increments_across_mixed_calls() -> None:
     s = Statistics()

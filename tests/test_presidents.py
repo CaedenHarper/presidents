@@ -1,6 +1,8 @@
+import logging
+
 import pytest  # noqa: TC002 3.10 - 3.13 fail with type checking block because they don't have lazy annotation evaluation
 
-from main import President, check_name, check_order, check_year
+from main import GAME_SETTINGS, LOGGER, President, check_name, check_order, check_year
 from presidents import (
     GEORGE_H_W_BUSH,
     GEORGE_W_BUSH,
@@ -64,7 +66,7 @@ def test_president_with_multiple_order_numbers_and_years() -> None:
     assert p.order_numbers == ["22", "24"]
     assert p.start_year == ["1885", "1893"]
 
-# ---------- check_name --------------------------------------------------------
+# check_name
 
 def test_check_name_accepts_first_last_simple() -> None:
     assert check_name("George Washington", GEORGE_WASHINGTON) is True
@@ -111,8 +113,58 @@ def test_check_name_half_ambiguous_john_adams_rules() -> None:
     assert check_name("John Adams", JOHN_ADAMS) is True
     assert check_name("John Adams", JOHN_QUINCY_ADAMS) is False
 
+# check_name with -a flag
 
-# ---------- check_order -------------------------------------------------------
+def test_ambiguous_fullname_bush_rejected_by_default_and_warns(caplog: pytest.LogCaptureFixture) -> None:
+    # default is allow_ambiguity=False
+    caplog.set_level(logging.WARNING, logger=LOGGER.name)
+    ok41 = check_name("George Bush", GEORGE_H_W_BUSH)
+    ok43 = check_name("George Bush", GEORGE_W_BUSH)
+
+    assert not ok41
+    assert not ok43
+    assert any("Ambiguous name provided" in r.getMessage() for r in caplog.records)
+
+
+def test_ambiguous_fullname_bush_allowed_with_flag_and_debug_logged(caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(GAME_SETTINGS, "allow_ambiguity", True, raising=True)
+    caplog.set_level(logging.DEBUG, logger=LOGGER.name)
+
+    ok41 = check_name("George Bush", GEORGE_H_W_BUSH)
+    ok43 = check_name("George Bush", GEORGE_W_BUSH)
+
+    assert ok41
+    assert ok43
+    # message flips to DEBUG and includes the "allowed" suffix
+    assert any("Allowed because of -a flag" in r.getMessage() for r in caplog.records)
+
+
+def test_half_ambiguous_john_adams_for_jqa_depends_on_flag(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Without -a: "John Adams" should NOT match John Quincy Adams
+    monkeypatch.setattr(GAME_SETTINGS, "allow_ambiguity", False, raising=True)
+    assert check_name("John Adams", JOHN_QUINCY_ADAMS) is False
+    # With -a: it SHOULD match John Quincy Adams
+    monkeypatch.setattr(GAME_SETTINGS, "allow_ambiguity", True, raising=True)
+    assert check_name("John Adams", JOHN_QUINCY_ADAMS) is True
+    # And the elder John Adams continues to match either way
+    assert check_name("John Adams", JOHN_ADAMS) is True
+
+
+def test_ambiguous_lastname_johnson_depends_on_flag(caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(GAME_SETTINGS, "allow_ambiguity", False, raising=True)
+    caplog.set_level(logging.WARNING, logger=LOGGER.name)
+    assert check_name("Johnson", LYNDON_B_JOHNSON) is False
+    assert any("Ambiguous name provided" in r.getMessage() for r in caplog.records)
+
+    # Now allow; last-name-only should be accepted, and debug is logged
+    monkeypatch.setattr(GAME_SETTINGS, "allow_ambiguity", True, raising=True)
+    caplog.clear()
+    caplog.set_level(logging.DEBUG, logger=LOGGER.name)
+    assert check_name("Johnson", LYNDON_B_JOHNSON) is True
+    assert any("Allowed because of -a flag" in r.getMessage() for r in caplog.records)
+
+
+# check_order
 
 def test_check_order_single_term_exact_match_and_trim() -> None:
     assert check_order("25", WILLIAM_MCKINLEY) is True
@@ -128,7 +180,7 @@ def test_check_order_multi_term_needs_space_separated_exact_sequence() -> None:
     assert check_order("24 22", GROVER_CLEVELAND) is False  # wrong order
 
 
-# ---------- check_year --------------------------------------------------------
+# check_year
 
 def test_check_year_single_term_exact_match_and_trim() -> None:
     assert check_year("1897", WILLIAM_MCKINLEY) is True

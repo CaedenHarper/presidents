@@ -31,16 +31,7 @@ class President:
                  *,
                  middle_name: str | None = None,
                  nickname: str | None = None) -> None:
-        """Initialize a President instance.
-
-        Args:
-            first_name (str): President's first name.
-            last_name (str): President's last name.
-            order_numbers (list[str]): Presidential order numbers.
-            start_year (list[str]): Years presidency started.
-            middle_name (str, optional): Middle name or initial. Defaults to None.
-            nickname (str, optional): Nickname. Defaults to None.
-        """
+        """Initialize a President instance."""
         self.first_name = first_name
         self.last_name = last_name
         self.order_numbers = order_numbers
