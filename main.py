@@ -5,125 +5,16 @@ import sys
 from dataclasses import dataclass
 from typing import ClassVar, Literal
 
-from presidents import ALL_PRESIDENTS, NUM_PRESIDENTS, President
+from formatting import format_as_percent
+from presidents import ALL_PRESIDENTS, NUM_PRESIDENTS
 from quiz_settings import QuizSettings
 from quiz_statistics import QuizStatistics
+from responses import get_response
 
 LOGGER = logging.getLogger(__name__)
 
 GAME_STATS = QuizStatistics()
 GAME_SETTINGS = QuizSettings()
-
-def format_as_percent(n: int, d: int) -> str:
-    """Helper function to format a numerator and denominator as a percent to two decimal places."""
-    return f"{(n / d * 100) if d > 0 else 0:.2f}%"
-
-def get_year_response(president: President, *, check_name_result: bool, check_order_result: bool) -> str:
-    """Return response based on which parts were correct in year response."""
-    if check_name_result and check_order_result:
-        return "Correct!"
-
-    if not check_order_result and not check_name_result:
-        return (
-            f"Wrong! The correct answer is president {president}, "
-            f"order number {' and '.join(president.order_numbers)}."
-        )
-
-    if not check_order_result:
-        return (
-            f"Wrong order number! The correct order number is "
-            f"{' and '.join(president.order_numbers)}."
-        )
-
-    if not check_name_result:
-        return f"Wrong president! The correct president is {president}."
-
-    # should not be possible
-    msg = "Unexpected combination of results."
-    raise RuntimeError(msg)
-
-def get_order_response(president: President, *, check_name_result: bool, check_year_result: bool) -> str:
-    """Return response based on which parts were correct in order response."""
-    if check_name_result and check_year_result:
-        return "Correct!"
-
-    if not check_year_result and not check_name_result:
-        return (
-            f"Wrong! The correct answer is president {president}, "
-            f"start year {' and '.join(president.start_year)}."
-        )
-
-    if not check_year_result:
-        return (
-            f"Wrong start year! The correct start year is "
-            f"{' and '.join(president.start_year)}."
-        )
-
-    if not check_name_result:
-        return f"Wrong president! The correct president is {president}."
-
-    # should not be possible
-    msg = "Unexpected combination of results."
-    raise RuntimeError(msg)
-
-def get_name_response(president: President, *, check_order_result: bool, check_year_result: bool) -> str:
-    """Return response based on which parts were correct in name response."""
-    if check_order_result and check_year_result:
-        return "Correct!"
-
-    if not check_year_result and not check_order_result:
-        return (
-            f"Wrong! The correct answer is order number "
-            f"{' and '.join(president.order_numbers)}, "
-            f"start year {' and '.join(president.start_year)}."
-        )
-
-    if not check_year_result:
-        return (
-            f"Wrong start year! The correct start year is "
-            f"{' and '.join(president.start_year)}."
-        )
-
-    if not check_order_result:
-        return (
-            f"Wrong order number! The correct order number is "
-            f"{' and '.join(president.order_numbers)}."
-        )
-
-    # should not be possible
-    msg = "Unexpected combination of results."
-    raise RuntimeError(msg)
-
-def get_response(president: President,
-                 question_type: str,
-                 *,
-                 check_name_result: bool | None = None,
-                 check_order_result: bool | None = None,
-                 check_year_result: bool | None = None) -> str:
-    """Return appropriate response based on which parts were correct."""
-    if question_type == "year":
-        if check_name_result is None or check_order_result is None:
-            msg = f"Both check_name_result and check_order_result must be provided for '{question_type}' question type."
-            raise ValueError(msg)
-
-        return get_year_response(president, check_name_result=check_name_result, check_order_result=check_order_result)
-
-    if question_type == "order":
-        if check_name_result is None or check_year_result is None:
-            msg = f"Both check_name_result and check_year_result must be provided for '{question_type}' question type."
-            raise ValueError(msg)
-
-        return get_order_response(president, check_name_result=check_name_result, check_year_result=check_year_result)
-
-    if question_type == "name":
-        if check_order_result is None or check_year_result is None:
-            msg = f"Both check_order_result and check_year_result must be provided for '{question_type}' question type."
-            raise ValueError(msg)
-
-        return get_name_response(president, check_order_result=check_order_result, check_year_result=check_year_result)
-
-    msg = "Unknown question type: " + question_type
-    raise ValueError(msg)
 
 def parse_arguments(settings: QuizSettings) -> None:
     """Parse command line arguments into passed settings object."""
