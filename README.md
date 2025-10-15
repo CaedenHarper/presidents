@@ -1,6 +1,6 @@
 # Presidents
 
-This project includes `presidents.py`, a Python script for memorizing the order of US Presidents.
+This project includes `main.py`, a Python CLI for memorizing the order of US Presidents.
 
 ## Features
 
@@ -24,4 +24,24 @@ options:
 
 ## Requirements
 
-- Tested with Python 3.14, should work with Python versions >= 3.10
+- Tested with Python >= 3.10
+- No additional dependencies required to run the CLI
+- See `requirements.txt` for testing requirements
+
+## Testing
+
+- Testing is done automatically on PR to main
+- Testing consists of Ruff linting, Pyright type checking, and Pytest tests
+- You can run the tests locally as well:
+```bash
+# create and populate a venv however you'd like
+uv venv
+.venv\Scripts\activate
+uv pip install -r requirements.txt
+# linting
+python -m ruff .
+# type checking
+python -m pyright .
+# pytests
+python -m pytest .
+```

@@ -1,0 +1,9 @@
+# Only required for testing
+# Linting
+ruff==0.14.0
+# Type Checking
+pyright==1.1.406
+nodeenv==1.9.1
+typing-extensions==4.15.0
+# Running tests
+pytest==8.4.2
