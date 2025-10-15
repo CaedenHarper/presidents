@@ -38,12 +38,24 @@ target-version = "py314"
 [lint.pydocstyle]
 convention = "google"
 
+# Ignore certain rules in tests
+[lint.per-file-ignores]
+"tests/**.py" = [
+    # Allow assert statements for pytest
+    "S101",
+    # Ignore missing docstrings in tests
+    "D103",
+    # Magic constants in tests allowed
+    "PLR2004",
+]
+
 [lint]
 # This project selects all rules, and selectively ignores ones that do not make sense
 select = ["ALL"]
 ignore = [
     # Ignore file docstring requirement
     "D100",
+    "D104",
     # Ignore code complexity recommendations
     "PLR0911",
     "PLR0913",
