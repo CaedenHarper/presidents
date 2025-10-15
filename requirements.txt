@@ -7,3 +7,6 @@ nodeenv==1.9.1
 typing-extensions==4.15.0
 # Running tests
 pytest==8.4.2
+# Currently unused in CI
+coverage==7.11.0
+pytest-cov==7.0.0

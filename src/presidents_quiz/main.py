@@ -207,9 +207,6 @@ def main() -> None:
                              check_year_result=check_year_result),
                 )
 
-        else: # unexpected question type
-            LOGGER.error("Unknown question type: %s", question_type)
-
 def cli() -> None:
     """Initialize CLI.
 
