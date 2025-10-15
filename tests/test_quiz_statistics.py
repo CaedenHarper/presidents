@@ -1,4 +1,4 @@
-from quiz_statistics import QuizStatistics
+from presidents_quiz.quiz_statistics import QuizStatistics
 
 
 def test_initial_state_is_zero() -> None:

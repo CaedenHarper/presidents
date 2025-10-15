@@ -1,6 +1,6 @@
 # Presidents
 
-This project includes `main.py`, a Python CLI for memorizing the order of US Presidents.
+This project includes `src/presidents_quiz/main.py`, a Python CLI for memorizing the order of US Presidents.
 
 ## Features
 
@@ -9,8 +9,10 @@ This project includes `main.py`, a Python CLI for memorizing the order of US Pre
 
 ## Usage
 
+- You can run the CLI using `python .`, `python -m presidents_quiz`, or `python src/presidents_quiz/main.py`
+
 ```bash
-python main.py [-h] [-r | -e] [-R START END] [-v {0,1,2}] [-a]
+python . [-h] [-r | -e] [-R START END] [-v {0,1,2}] [-a]
 
 options:
   -h, --help            show this help message and exit
@@ -40,6 +42,9 @@ options:
 uv venv
 .venv\Scripts\activate
 uv pip install -r requirements.txt
+# if developing locally, ensure pacakge is in venv
+# if you don't you will get import errors in tests/
+uv pip install -e .
 # linting
 python -m ruff check .
 # type checking

@@ -1,6 +1,6 @@
 import pytest
 
-from formatting import format_as_percent
+from presidents_quiz.formatting import format_as_percent
 
 # format_as_percent
 

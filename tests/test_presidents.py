@@ -2,7 +2,7 @@ import logging
 
 import pytest  # noqa: TC002 3.10 - 3.13 fail with type checking block because they don't have lazy annotation evaluation
 
-from presidents import (
+from presidents_quiz.presidents import (
     GEORGE_H_W_BUSH,
     GEORGE_W_BUSH,
     GEORGE_WASHINGTON,
