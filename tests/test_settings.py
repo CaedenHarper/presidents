@@ -1,15 +1,15 @@
 import pytest
 
-from main import NUM_PRESIDENTS, Settings
+from main import NUM_PRESIDENTS, QuizSettings
 
 
 def test_defaults() -> None:
-    s = Settings()
+    s = QuizSettings()
     assert s.repeat_questions is False
     assert s.end_early is False
     # Defaults to full range using the module's NUM_PRESIDENTS (+1 for slicing stop)
     assert s.president_range == (1, NUM_PRESIDENTS + 1)
-    assert s.verbose_level == Settings.VERBOSE_NORMAL  # 1
+    assert s.verbose_level == QuizSettings.VERBOSE_NORMAL  # 1
 
 
 @pytest.mark.parametrize(
@@ -22,7 +22,7 @@ def test_defaults() -> None:
     ],
 )
 def test_valid_range_is_kept(rng: tuple[int, int]) -> None:
-    s = Settings(president_range=rng)
+    s = QuizSettings(president_range=rng)
     assert s.president_range == rng
 
 
@@ -35,39 +35,39 @@ def test_valid_range_is_kept(rng: tuple[int, int]) -> None:
     ],
 )
 def test_invalid_range_falls_back_to_default(rng: tuple[int, int]) -> None:
-    s = Settings(president_range=rng)
+    s = QuizSettings(president_range=rng)
     assert s.president_range == (1, NUM_PRESIDENTS + 1)
 
 
 @pytest.mark.parametrize(
     ("level", "expected"),
     [
-        (None, Settings.VERBOSE_NORMAL),   # default path -> 1
-        (Settings.VERBOSE_QUIET, Settings.VERBOSE_QUIET),       # 0
-        (Settings.VERBOSE_NORMAL, Settings.VERBOSE_NORMAL),     # 1
-        (Settings.VERBOSE_VERBOSE, Settings.VERBOSE_VERBOSE),   # 2
-        (99, Settings.VERBOSE_NORMAL),  # coerced to 1 if not in (0,1,2)
-        (-1, Settings.VERBOSE_NORMAL),
+        (None, QuizSettings.VERBOSE_NORMAL),   # default path -> 1
+        (QuizSettings.VERBOSE_QUIET, QuizSettings.VERBOSE_QUIET),       # 0
+        (QuizSettings.VERBOSE_NORMAL, QuizSettings.VERBOSE_NORMAL),     # 1
+        (QuizSettings.VERBOSE_VERBOSE, QuizSettings.VERBOSE_VERBOSE),   # 2
+        (99, QuizSettings.VERBOSE_NORMAL),  # coerced to 1 if not in (0,1,2)
+        (-1, QuizSettings.VERBOSE_NORMAL),
     ],
 )
 def test_verbose_level_handling(level: int | None, expected: int) -> None:
-    s = Settings() if level is None else Settings(verbose_level=level)
+    s = QuizSettings() if level is None else QuizSettings(verbose_level=level)
     assert s.verbose_level == expected
 
 
 def test_flags_and_pretty_print_format() -> None:
-    s = Settings(
+    s = QuizSettings(
         repeat_questions=True,
         end_early=True,
         president_range=(3, 10),
-        verbose_level=Settings.VERBOSE_VERBOSE,
+        verbose_level=QuizSettings.VERBOSE_VERBOSE,
         allow_ambiguity=False,
     )
     # ensure values stick (range is valid so no fallback)
     assert s.repeat_questions is True
     assert s.end_early is True
     assert s.president_range == (3, 10)
-    assert s.verbose_level == Settings.VERBOSE_VERBOSE
+    assert s.verbose_level == QuizSettings.VERBOSE_VERBOSE
     assert s.allow_ambiguity is False
 
     # pretty_print should match exact formatting
