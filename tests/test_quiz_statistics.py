@@ -1,8 +1,8 @@
-from main import Statistics
+from quiz_statistics import QuizStatistics
 
 
 def test_initial_state_is_zero() -> None:
-    s = Statistics()
+    s = QuizStatistics()
     assert s.total_questions == 0
     assert s.correct_questions == 0
     assert s.half_correct_questions == 0
@@ -17,7 +17,7 @@ def test_initial_state_is_zero() -> None:
 # record_year_question
 
 def test_record_year_question_both_correct() -> None:
-    s = Statistics()
+    s = QuizStatistics()
     s.record_year_question(correct_name=True, correct_order=True)
 
     assert s.total_questions == 1
@@ -36,7 +36,7 @@ def test_record_year_question_both_correct() -> None:
 
 
 def test_record_year_question_half_correct_name_only() -> None:
-    s = Statistics()
+    s = QuizStatistics()
     s.record_year_question(correct_name=True, correct_order=False)
 
     assert s.total_questions == 1
@@ -51,7 +51,7 @@ def test_record_year_question_half_correct_name_only() -> None:
 
 
 def test_record_year_question_none_correct() -> None:
-    s = Statistics()
+    s = QuizStatistics()
     s.record_year_question(correct_name=False, correct_order=False)
 
     assert s.total_questions == 1
@@ -68,7 +68,7 @@ def test_record_year_question_none_correct() -> None:
 # record_order_question
 
 def test_record_order_question_both_correct() -> None:
-    s = Statistics()
+    s = QuizStatistics()
     s.record_order_question(correct_name=True, correct_year=True)
 
     assert s.total_questions == 1
@@ -86,7 +86,7 @@ def test_record_order_question_both_correct() -> None:
 
 
 def test_record_order_question_half_correct_year_only() -> None:
-    s = Statistics()
+    s = QuizStatistics()
     s.record_order_question(correct_name=False, correct_year=True)
 
     assert s.total_questions == 1
@@ -100,7 +100,7 @@ def test_record_order_question_half_correct_year_only() -> None:
 
 
 def test_record_order_question_none_correct() -> None:
-    s = Statistics()
+    s = QuizStatistics()
     s.record_order_question(correct_name=False, correct_year=False)
 
     assert s.total_questions == 1
@@ -116,7 +116,7 @@ def test_record_order_question_none_correct() -> None:
 # record_name_question
 
 def test_record_name_question_both_correct() -> None:
-    s = Statistics()
+    s = QuizStatistics()
     s.record_name_question(correct_order=True, correct_year=True)
 
     assert s.total_questions == 1
@@ -134,7 +134,7 @@ def test_record_name_question_both_correct() -> None:
 
 
 def test_record_name_question_half_correct_order_only() -> None:
-    s = Statistics()
+    s = QuizStatistics()
     s.record_name_question(correct_order=True, correct_year=False)
 
     assert s.total_questions == 1
@@ -148,7 +148,7 @@ def test_record_name_question_half_correct_order_only() -> None:
 
 
 def test_record_name_question_none_correct() -> None:
-    s = Statistics()
+    s = QuizStatistics()
     s.record_name_question(correct_order=False, correct_year=False)
 
     assert s.total_questions == 1
@@ -164,7 +164,7 @@ def test_record_name_question_none_correct() -> None:
 # cumulative behavior
 
 def test_cumulative_increments_across_mixed_calls() -> None:
-    s = Statistics()
+    s = QuizStatistics()
     # year: both correct
     s.record_year_question(correct_name=True, correct_order=True)
     # order: half correct (year only)
@@ -188,4 +188,15 @@ def test_cumulative_increments_across_mixed_calls() -> None:
     assert s.year_questions == 2
     assert s.correct_years == 1
 
-# TODO: add pretty print test
+def test_pretty_print() -> None:
+    s = QuizStatistics()
+    # year: both correct
+    s.record_year_question(correct_name=True, correct_order=True)
+    # order: half correct (year only)
+    s.record_order_question(correct_name=False, correct_year=True)
+    # name: none correct
+    s.record_name_question(correct_order=False, correct_year=False)
+
+    expected = ("total_questions=3, correct_questions=1, half_correct_questions=2, correct_names=1, name_questions=2, "
+                "correct_orders=1, order_questions=2, correct_years=1, year_questions=2")
+    assert s.pretty_print() == expected
