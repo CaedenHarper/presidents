@@ -42,6 +42,13 @@ def parse_arguments(settings: QuizSettings) -> None:
                               "--end-early",
                               action="store_true",
                               help="Ends questions when all have been asked. Can not be used with --repeat. (Default: false)")
+    parser.add_argument("-a",
+                        "--allow-ambiguity",
+                        action="store_true",
+                        help=(
+                            "Allows amibguous answers. For example, 'John Adams' will count for both presidents if this flag is true. "
+                            "(Default: false)"
+                        ))
     parser.add_argument("-R",
                         "--range",
                         type=int,
@@ -55,26 +62,21 @@ def parse_arguments(settings: QuizSettings) -> None:
                         choices=[0, 1, 2],
                         default=1,
                         help="Verbosity level: 0 = quiet, 1 = normal, 2 = verbose. (Default: 1)")
-    parser.add_argument("-a",
-                        "--allow-ambiguity",
-                        action="store_true",
-                        help=(
-                            "Allows amibguous answers. For example, 'John Adams' will count for both presidents if this flag is true. "
-                            "(Default: false)"
-                        ))
 
     args = ArgumentTypes(**parser.parse_args().__dict__)
 
-    # Update settings based on parsed arguments
-    settings.repeat_questions = args.repeat
-    settings.end_early = args.end_early
+    # error if bad presidents range
     if 1 <= args.range[0] <= args.range[1] <= NUM_PRESIDENTS:
-        settings.president_range = (args.range[0], args.range[1])
+        good_range = (args.range[0], args.range[1])
     else:
         parser.error(f"Invalid range: {args.range}. Must be between 1 and "
                      f"{NUM_PRESIDENTS}, inclusive, with START <= END.")
-    settings.verbose_level = args.verbosity
-    settings.allow_ambiguity = args.allow_ambiguity
+
+    settings.update(repeat_questions=args.repeat,
+                    end_early=args.end_early,
+                    president_range=good_range,
+                    verbose_level=args.verbosity,
+                    allow_ambiguity=args.allow_ambiguity)
 
     root = logging.getLogger()
 

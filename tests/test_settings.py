@@ -7,6 +7,7 @@ def test_defaults() -> None:
     s = QuizSettings()
     assert s.repeat_questions is False
     assert s.end_early is False
+    assert s.allow_ambiguity is False
     # Defaults to full range using the module's NUM_PRESIDENTS (+1 for slicing stop)
     assert s.president_range == (1, NUM_PRESIDENTS + 1)
     assert s.verbose_level == QuizSettings.VERBOSE_NORMAL  # 1
@@ -22,7 +23,8 @@ def test_defaults() -> None:
     ],
 )
 def test_valid_range_is_kept(rng: tuple[int, int]) -> None:
-    s = QuizSettings(president_range=rng)
+    s = QuizSettings()
+    s.update(president_range=rng)
     assert s.president_range == rng
 
 
@@ -35,7 +37,8 @@ def test_valid_range_is_kept(rng: tuple[int, int]) -> None:
     ],
 )
 def test_invalid_range_falls_back_to_default(rng: tuple[int, int]) -> None:
-    s = QuizSettings(president_range=rng)
+    s = QuizSettings()
+    s.update(president_range=rng)
     assert s.president_range == (1, NUM_PRESIDENTS + 1)
 
 
@@ -51,18 +54,14 @@ def test_invalid_range_falls_back_to_default(rng: tuple[int, int]) -> None:
     ],
 )
 def test_verbose_level_handling(level: int | None, expected: int) -> None:
-    s = QuizSettings() if level is None else QuizSettings(verbose_level=level)
+    s = QuizSettings()
+    s.update(verbose_level=level)
     assert s.verbose_level == expected
 
 
 def test_flags_and_pretty_print_format() -> None:
-    s = QuizSettings(
-        repeat_questions=True,
-        end_early=True,
-        president_range=(3, 10),
-        verbose_level=QuizSettings.VERBOSE_VERBOSE,
-        allow_ambiguity=False,
-    )
+    s = QuizSettings()
+    s.update(repeat_questions=True, end_early=True, president_range=(3, 10), verbose_level=QuizSettings.VERBOSE_VERBOSE, allow_ambiguity=False)
     # ensure values stick (range is valid so no fallback)
     assert s.repeat_questions is True
     assert s.end_early is True
@@ -71,5 +70,5 @@ def test_flags_and_pretty_print_format() -> None:
     assert s.allow_ambiguity is False
 
     # pretty_print should match exact formatting
-    expected = "repeat_questions=True, end_early=True, president_range=(3, 10), verbose_level=2, allow_ambiguity=False"
+    expected = "repeat_questions=True, end_early=True, allow_ambiguity=False, president_range=(3, 10), verbose_level=2"
     assert s.pretty_print() == expected
