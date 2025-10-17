@@ -11,6 +11,7 @@ from presidents_quiz.presidents import (
     JOHN_ADAMS,
     JOHN_QUINCY_ADAMS,
     LYNDON_B_JOHNSON,
+    MARTIN_VANBUREN,
     RICHARD_NIXON,
     THEODORE_ROOSEVELT,
     WILLIAM_MCKINLEY,
@@ -65,6 +66,16 @@ def test_president_with_multiple_order_numbers_and_years() -> None:
     p = President("Grover", "Cleveland", ["22", "24"], ["1885", "1893"])
     assert p.order_numbers == ["22", "24"]
     assert p.start_year == ["1885", "1893"]
+
+def test_check_name_allows_buren_for_van_buren_when_ambiguous_flag_true() -> None:
+    p = MARTIN_VANBUREN
+    assert p.check_name("Buren", allow_ambiguity=True) is True
+
+
+def test_check_name_rejects_buren_for_van_buren_when_ambiguous_flag_false() -> None:
+    p = MARTIN_VANBUREN
+    assert p.check_name("Buren", allow_ambiguity=False) is False
+
 
 # check_name
 

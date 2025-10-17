@@ -145,7 +145,11 @@ class President:
         if last == given_name and given_name not in self.AMBIGIOUS_LAST_NAMES:
             return True
 
-        if last == given_name and given_name in self.AMBIGIOUS_LAST_NAMES and allow_ambiguity:  # noqa: SIM103 less readable
+        if last == given_name and given_name in self.AMBIGIOUS_LAST_NAMES and allow_ambiguity:
+            return True
+
+        # allow "Buren" for "Van Buren" if allow ambiguity is on
+        if given_name == "buren" and last == "van buren" and allow_ambiguity:  # noqa: SIM103 less readable
             return True
 
         return False
